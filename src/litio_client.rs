@@ -10,12 +10,19 @@ use na::geometry::Point3;
 use std::net::SocketAddr;
 use nalgebra::base::Vector3;
 
+
+struct PlayerNodes {
+    sphere: SceneNode,
+    life: SceneNode,
+    life_core: SceneNode,
+}
+
 #[allow(dead_code)]
-#[derive(Clone)]
 pub struct GameState {
     player_id: usize,
     addr: SocketAddr,
-    input: LitioPlayerInput
+    input: LitioPlayerInput,
+    players: HashMap<usize, (LitioPlayer, PlayerNodes)>,
 }
 
 impl GameState {
@@ -24,6 +31,7 @@ impl GameState {
             addr: "0.0.0.0:1".parse().unwrap(),
             player_id: 0,
             input: LitioPlayerInput::new(),
+            players: HashMap::new(),
         }
     }
 }
@@ -103,7 +111,6 @@ impl GameplayClient for Client {
         let tx = bincode::deserialize(tx).unwrap_or(Tx::Unknown);
         match tx {
             Tx::Update(update) => {
-
                 update.things.iter().for_each(|(id, info)| {
                     let mut old_info = None;
                     if let Some(x) = &self.state {
@@ -120,6 +127,7 @@ impl GameplayClient for Client {
                             // node.set_local_transformation(info.iso);
                             let mut loc = info.iso.translation;
                             let rot = info.iso.rotation;
+
                             if let Some(x) = old_info {
                                 loc.x = (loc.x + x.iso.translation.x) / 2.0;
                                 loc.y = (loc.y + x.iso.translation.y) / 2.0;
@@ -131,10 +139,14 @@ impl GameplayClient for Client {
                         },
                         LitioThing::Player(p) => {
                             if !self.nodes.contains_key(id) {
+                                let nodes = PlayerNodes {
+                                    sphere: window.add_sphere(PL_RAD*2.0),
+                                    life: window.add_cube(2.0, 0.2, 0.2),
+                                    life_core: window.add_cube(2.0, 0.14, 0.14),
+                                };
                                 println!("creating PLAYER");
-                                let mut node = window.add_sphere(PL_RAD*2.0);
-                                node.set_texture_from_file(&std::path::Path::new("./tex.jpg"), "tex");
-                                self.nodes.insert(*id, node);
+                                nodes.sphere.set_texture_from_file(&std::path::Path::new("./tex.jpg"), "tex");
+                                self.ps.players.insert(*id, (p.clone(), nodes));
                             }
                             let node = self.nodes.get_mut(id).expect("AS7D6");
                             let mut loc = info.iso.translation;

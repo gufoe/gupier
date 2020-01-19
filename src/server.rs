@@ -130,7 +130,7 @@ pub fn serve<G>(port: u16, gameplay: G)
 where G: GameplayHost {
     let mut lobby = Lobby::spawn(LobbyConfig {
         port,
-        min_players: 2,
+        min_players: 1,
     }, gameplay);
     lobby.wait_players();
     lobby.run_gameplay();
