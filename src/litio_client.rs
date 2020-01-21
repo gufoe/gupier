@@ -13,8 +13,8 @@ use nalgebra::base::Vector3;
 
 struct PlayerNodes {
     sphere: SceneNode,
-    life: SceneNode,
-    life_core: SceneNode,
+    // life: SceneNode,
+    // life_core: SceneNode,
 }
 
 #[allow(dead_code)]
@@ -51,14 +51,6 @@ impl Client {
             nodes: HashMap::new(),
             state: None,
         }
-    }
-
-    fn pl_thing_id(&self) -> usize {
-        *self.state.as_ref().unwrap().pl2thing.get_by_left(&self.ps.player_id).unwrap()
-    }
-
-    fn pl_thing(&self) -> &LitioThingUpdate {
-        self.state.as_ref().unwrap().things.get(&self.pl_thing_id()).unwrap()
     }
 
     fn is_ready(&self) -> bool {
@@ -138,29 +130,45 @@ impl GameplayClient for Client {
                             node.set_color(p.color.0, p.color.1, p.color.2);
                         },
                         LitioThing::Player(p) => {
-                            if !self.nodes.contains_key(id) {
-                                let nodes = PlayerNodes {
-                                    sphere: window.add_sphere(PL_RAD*2.0),
-                                    life: window.add_cube(2.0, 0.2, 0.2),
-                                    life_core: window.add_cube(2.0, 0.14, 0.14),
+                            if !self.ps.players.contains_key(id) {
+                                let mut nodes = PlayerNodes {
+                                    sphere: window.add_sphere(1.0),
+                                    // life: window.add_cube(1.5, 0.3, 0.3),
+                                    // life_core: window.add_cube(1.5, 0.14, 0.14),
                                 };
                                 println!("creating PLAYER");
                                 nodes.sphere.set_texture_from_file(&std::path::Path::new("./tex.jpg"), "tex");
                                 self.ps.players.insert(*id, (p.clone(), nodes));
                             }
-                            let node = self.nodes.get_mut(id).expect("AS7D6");
-                            let mut loc = info.iso.translation;
+                            self.ps.players.get_mut(id).unwrap().0 = p.clone();
+                            let loc = info.iso.translation;
                             let rot = info.iso.rotation;
-                            if let Some(x) = old_info {
-                                loc.x = (loc.x + x.iso.translation.x) / 2.0;
-                                loc.y = (loc.y + x.iso.translation.y) / 2.0;
-                                loc.z = (loc.z + x.iso.translation.z) / 2.0;
-                            }
-                            node.set_local_translation(loc);
-                            node.set_local_rotation(rot);
-                            node.set_color(p.color.0, p.color.1, p.color.2);
+
+
+                            // Interpolation
+                            // if let Some(x) = old_info {
+                            //     loc.x = (loc.x + x.iso.translation.x) / 2.0;
+                            //     loc.y = (loc.y + x.iso.translation.y) / 2.0;
+                            //     loc.z = (loc.z + x.iso.translation.z) / 2.0;
+                            // }
+
+                            let (pl, nodes) = self.ps.players.get_mut(id).unwrap();
+                            nodes.sphere.set_local_translation(loc);
+                            nodes.sphere.set_local_rotation(rot);
+                            nodes.sphere.set_color(p.color.0, p.color.1, p.color.2);
+
+                            // let mut life_loc = loc;
+                            // life_loc.y+= 2.0;
+
+                            // nodes.life_core.set_local_translation(life_loc);
+                            // nodes.life_core.set_local_rotation(rot);
+                            // nodes.life_core.set_color(1.0, 0.0, 0.);
+
+                            // nodes.life.set_local_translation(life_loc);
+                            // nodes.life.set_local_rotation(rot);
+                            // nodes.life.set_color(0.0, 1.0, 0.);
+                            // nodes.life.set_local_scale(1.5 * (pl.life as f32/ 100.0), 0.3, 0.3);
                         },
-                        _ => {},
                     }
                 });
 
@@ -200,8 +208,9 @@ impl GameplayClient for Client {
             self.ps.input.acc = v;
 
             let lar = self.ps.input.look_at_rot;
-            let me = self.pl_thing();
-            let pos = me.iso.translation;
+            let me = self.state.as_ref().unwrap();
+            let update = me.things.get(&self.ps.player_id).unwrap();
+            let pos = update.iso.translation;
             // println!("[c] pos {:?}", pos);
 
             // At center

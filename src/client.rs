@@ -113,10 +113,10 @@ where G: GameplayClient  {
 
         loop {
             let p = game.ch.recv_all();
+
             p.iter().for_each(|packet| {
                 game.gameplay.on_packet(&mut game.ch, &packet.1, window);
             });
-
 
             window.events().iter().for_each(|e| {
                 game.gameplay.on_event(&mut game.ch, &e.value, window);

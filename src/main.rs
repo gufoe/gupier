@@ -11,7 +11,6 @@ mod com;
 mod litio_host;
 mod litio_client;
 mod gameplay;
-
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]

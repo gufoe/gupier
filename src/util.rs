@@ -14,9 +14,19 @@ pub fn rand_intr(min: i32, max: i32) -> i32 {
     rand::thread_rng().gen_range(min, max)
 }
 #[allow(dead_code)]
+pub fn uid() -> usize {
+    use rand::Rng;
+    rand::thread_rng().gen_range(100000, 999999)
+}
+#[allow(dead_code)]
 pub fn rand_float(min: f32, max: f32) -> f32 {
     use rand::Rng;
     rand::thread_rng().gen_range(min, max)
+}
+#[allow(dead_code)]
+pub fn pick(values: &[usize]) -> usize {
+    use rand::Rng;
+    values[rand::thread_rng().gen_range(0, values.len())]
 }
 #[allow(dead_code)]
 pub fn maybe(pty: f32) -> bool{

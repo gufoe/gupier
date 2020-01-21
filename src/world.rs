@@ -32,10 +32,11 @@ pub struct Entity {
 pub struct World {
     next_id: usize,
     mechanical_world: DefaultMechanicalWorld<f32>,
-    geometrical_world: DefaultGeometricalWorld<f32>,
+    pub geometrical_world: DefaultGeometricalWorld<f32>,
     entities: HashMap<usize, Entity>,
-    bodies: DefaultBodySet<f32>,
-    colliders: DefaultColliderSet<f32>,
+    pub col2id: HashMap<nphysics3d::object::DefaultColliderHandle, usize>,
+    pub bodies: DefaultBodySet<f32>,
+    pub colliders: DefaultColliderSet<f32>,
     joint_constraints: DefaultJointConstraintSet<f32>,
     force_generators: DefaultForceGeneratorSet<f32>,
 }
@@ -48,6 +49,7 @@ impl World {
             mechanical_world: DefaultMechanicalWorld::new(Vector3::new(0.0, -10.0, 0.0)),
             geometrical_world: DefaultGeometricalWorld::new(),
             entities: HashMap::new(),
+            col2id: HashMap::new(),
             bodies: DefaultBodySet::new(),
             colliders: DefaultColliderSet::new(),
             joint_constraints: DefaultJointConstraintSet::new(),
@@ -79,14 +81,14 @@ impl World {
         let body = RigidBodyDesc::<f32>::new()
                             // .angular_damping(1.0)
                             .angular_inertia(Matrix3::new_rotation(0.0))
-                            .set_mass(1.0)
+                            .set_mass(0.1)
                             .build();
 
         let handle = self.bodies.insert(body);
         let shape = ShapeHandle::new(Cuboid::new(Vector3::new(size.0, size.1, size.2)));
 
         let collider = ColliderDesc::new(shape)
-            .material(MaterialHandle::new(BasicMaterial::new(0.1, 4.0)))
+            .material(MaterialHandle::new(BasicMaterial::new(0.3, 0.8)))
             // .set_rotation(Vector3::new(0.0, 0.1, 0.4))
             .build(BodyPartHandle(handle, 0));
         let coll_handle = self.colliders.insert(collider);
@@ -117,7 +119,8 @@ impl World {
         let shape = ShapeHandle::new(Ball::new(size));
 
         let collider = ColliderDesc::new(shape)
-            .material(MaterialHandle::new(BasicMaterial::new(0.2, 10.0)))
+            .material(MaterialHandle::new(BasicMaterial::new(0.3, 5.0)))
+            // .sensor(true)
             // .set_rotation(Vector3::new(0.0, 1.0, 2.0))
             .build(BodyPartHandle(handle, 0));
         let coll_handle = self.colliders.insert(collider);
@@ -133,6 +136,7 @@ impl World {
     pub fn add_entity(&mut self, e: Entity) -> usize {
         let id = self.next_id;
         self.next_id+= 1;
+        self.col2id.insert(e.collider, id);
         self.entities.insert(id, e);
         id
     }

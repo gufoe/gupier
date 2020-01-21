@@ -83,6 +83,7 @@ where G: GameplayHost {
                     println!("[s] new client {} {:?}!!", addr, color);
                     let id = self.players.len()+1;
                     self.players.insert(id, Player::new(id, addr, color));
+                    self.players.insert(id+1, Player::new(id+1, addr, color));
                     self.sock2pl.insert(addr, id);
                     self.broadcast(Packet::Joined(id));
                 },
@@ -130,7 +131,7 @@ pub fn serve<G>(port: u16, gameplay: G)
 where G: GameplayHost {
     let mut lobby = Lobby::spawn(LobbyConfig {
         port,
-        min_players: 1,
+        min_players: 2,
     }, gameplay);
     lobby.wait_players();
     lobby.run_gameplay();
